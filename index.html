@@ -3007,7 +3007,7 @@
                 const accessToken = await getAccessToken();
                 if (!accessToken) {
                     logError('Google Sheets', 'Failed to get access token');
-                    return;
+                    return false;
                 }
                 
                 const fields = getSelectedDataFields();
@@ -3042,9 +3042,12 @@
                 if (!response.ok) {
                     const errorData = await response.json();
                     logError('Google Sheets', errorData.error?.message || `API error ${response.status}`);
+                    return false;
                 }
+                return true;
             } catch (error) {
                 logError('Google Sheets', error.message);
+                return false;
             }
         }
 
@@ -3207,6 +3210,7 @@
             failedWallets = [];
             const startTime = Date.now();
             let successCount = 0, processed = [];
+            let sheetSaveFailures = 0;
             const shouldSave = document.getElementById('saveToSheets').checked;
             const skipDupes = document.getElementById('skipDuplicates').checked;
             const duplicateCount = duplicateAddresses.length;
@@ -3244,7 +3248,10 @@
                 
                 try {
                     const data = await fetchWalletData(toProcess[i]);
-                    if (shouldSave) await saveToSheet(data);
+                    if (shouldSave) {
+                        const saveSuccess = await saveToSheet(data);
+                        if (!saveSuccess) sheetSaveFailures++;
+                    }
                     saveHistory(data, isDuplicate);
                     processed.push(data);
                     successCount++;
@@ -3260,13 +3267,29 @@
             document.getElementById('cancelBtn').style.display = 'none';
 
             let completionMsg = '';
-            const saveMsg = shouldSave ? ' & saved to Sheets' : '';
+            // Determine save message based on success/failure
+            let saveMsg = '';
+            let sheetError = false;
+            if (shouldSave) {
+                if (sheetSaveFailures === 0) {
+                    saveMsg = ' & saved to Sheets';
+                } else if (sheetSaveFailures < successCount) {
+                    saveMsg = ` (${successCount - sheetSaveFailures}/${successCount} saved to Sheets)`;
+                    sheetError = true;
+                } else {
+                    saveMsg = ', Sheets save failed';
+                    sheetError = true;
+                }
+            }
             
             if (toProcess.length === 1 && processed.length === 1) {
                 displayResults(processed[0]);
                 document.getElementById('resultsSection').classList.add('active');
                 
-                if (duplicateCount > 0 && !skipDupes) {
+                if (sheetError) {
+                    completionMsg = `✓ Lookup complete${saveMsg}!`;
+                    showMessage('warning', completionMsg);
+                } else if (duplicateCount > 0 && !skipDupes) {
                     completionMsg = `✓ Lookup complete${saveMsg} (⚠️ duplicate)`;
                     showMessage('warning', completionMsg);
                 } else {
@@ -3292,7 +3315,7 @@
                 }
                 completionMsg = msgParts.join(', ');
                 
-                const msgType = failedWallets.length > 0 ? 'warning' : (duplicateCount > 0 ? 'warning' : 'success');
+                const msgType = (failedWallets.length > 0 || sheetError) ? 'warning' : (duplicateCount > 0 ? 'warning' : 'success');
                 showMessage(msgType, completionMsg);
             }
         }

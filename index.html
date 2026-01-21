@@ -3004,6 +3004,12 @@
         
         async function saveToSheet(data) {
             try {
+                // Check if Sheets config is properly set
+                if (!CONFIG.SHEET_ID || !CONFIG.SERVICE_ACCOUNT_EMAIL || !CONFIG.PRIVATE_KEY) {
+                    logError('Google Sheets', 'Sheets not configured - check Settings');
+                    return false;
+                }
+                
                 const accessToken = await getAccessToken();
                 if (!accessToken) {
                     logError('Google Sheets', 'Failed to get access token');

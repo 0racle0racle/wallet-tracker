@@ -1,0 +1,3316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #131313;
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+
+        /* Top Icons - moved to .top-icons and .top-icon classes */
+
+        /* Settings Modal */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-modal.active {
+            display: flex;
+        }
+
+        .settings-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid #2a2a2a;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .settings-header h3 {
+            color: #fff;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .config-field label {
+            display: block;
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-bottom: 6px;
+        }
+
+        .config-field input, .config-field textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            background: #0f0f0f;
+            color: #fff;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .config-field input:focus, .config-field textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.save {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .toggle-btn.save:hover {
+            background: #2563eb;
+        }
+
+        /* Setup Guide */
+        .setup-guide {
+            margin-top: 20px;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .guide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #0f0f0f;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #9ca3af;
+            transition: background 0.2s;
+        }
+
+        .guide-header:hover {
+            background: #151515;
+            color: #fff;
+        }
+
+        .guide-content {
+            display: none;
+            padding: 16px;
+            background: #0a0a0a;
+            font-size: 0.8rem;
+            color: #9ca3af;
+            line-height: 1.6;
+        }
+
+        .guide-content.active {
+            display: block;
+        }
+
+        .guide-content ol {
+            padding-left: 20px;
+        }
+
+        .guide-content li {
+            margin-bottom: 12px;
+        }
+
+        .guide-content code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #3b82f6;
+        }
+
+        /* Input Section */
+        .input-section {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2a2a;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            background: #0f0f0f;
+            color: #fff;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        textarea::placeholder {
+            color: #4b5563;
+        }
+
+        .input-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #0f0f0f;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 110px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #1e1e1e;
+            color: #9ca3af;
+            border: 1px solid #2a2a2a;
+        }
+
+        .btn-secondary:hover {
+            background: #252525;
+            color: #fff;
+        }
+
+        .btn-cancel {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .btn-cancel:hover {
+            background: #b91c1c;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* File Upload Button */
+        .btn-upload {
+            background: #1e1e1e;
+            color: #9ca3af;
+            border: 1px solid #2a2a2a;
+            cursor: pointer;
+        }
+
+        .btn-upload:hover {
+            background: #252525;
+            color: #fff;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 4px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        /* Results Section */
+        .results-section {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2a2a;
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-section h2 {
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Batch Summary */
+        .batch-summary {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .batch-summary.active {
+            display: grid;
+        }
+
+        .summary-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #2a2a2a;
+        }
+
+        .summary-box .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-box .label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-box.success .number { color: #10b981; }
+        .summary-box.failed .number { color: #ef4444; }
+        .summary-box.duplicates .number { color: #f59e0b; }
+        .summary-box.total .number { color: #3b82f6; }
+
+        /* Explorer Results Cards */
+        .explorer-result-card {
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .explorer-result-card .label {
+            color: #6b7280;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .explorer-result-card .value {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .explorer-result-card .value.large {
+            font-size: 1.6rem;
+            color: #10b981;
+        }
+
+        .explorer-result-card .value.cyan {
+            color: #3b82f6;
+        }
+
+        .explorer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        /* Social Links Row */
+        .social-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .address-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .address-row .value {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        /* History Section */
+        .history-section {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2a2a;
+            display: none;
+        }
+
+        .history-section.active {
+            display: block;
+        }
+
+        .history-section h2 {
+            color: #fff;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #0f0f0f;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            gap: 16px;
+            border: 1px solid #2a2a2a;
+            transition: border-color 0.2s;
+        }
+
+        .history-item:hover {
+            border-color: #3a3a3a;
+        }
+
+        .history-item.duplicate {
+            border-left: 3px solid #f59e0b;
+        }
+
+        .history-item-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-wallet {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #3b82f6;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-details {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .history-actions .icon-btn {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Duplicate Badge */
+        .dup-badge {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Chain Badge */
+        .chain-badge {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin-right: 6px;
+        }
+
+        .chain-badge.tron {
+            background: rgba(255, 0, 19, 0.15);
+            color: #ff4d4d;
+        }
+
+        .chain-badge.ethereum {
+            background: rgba(98, 126, 234, 0.15);
+            color: #627eea;
+        }
+
+        .chain-badge.solana {
+            background: rgba(0, 255, 163, 0.15);
+            color: #00ffa3;
+        }
+
+        .expand-link {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .expand-link a {
+            color: #3b82f6;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .expand-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Messages */
+        .message {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .message.active {
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .message.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        /* Failed List */
+        .failed-list {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .failed-list.active {
+            display: block;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3a3a3a;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }
+
+        /* API Status Indicators */
+        .api-status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            border: 1px solid #2a2a2a;
+        }
+
+        .api-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+
+        .api-status .dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        .api-status .dot.error {
+            background: #ef4444;
+            box-shadow: 0 0 6px #ef4444;
+        }
+
+        .api-status .dot.checking {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Top Icons Container */
+        .top-icons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .top-icon {
+            width: 40px;
+            height: 40px;
+            background: #1e1e1e;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #6b7280;
+            position: relative;
+        }
+
+        .top-icon:hover {
+            background: #252525;
+            color: #fff;
+            border-color: #3a3a3a;
+        }
+
+        .top-icon .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: none;
+            box-shadow: 0 0 6px #ef4444;
+        }
+
+        .top-icon .badge.active {
+            display: block;
+        }
+
+        /* Error Log Modal */
+        .error-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-modal.active {
+            display: flex;
+        }
+
+        .error-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 550px;
+            border: 1px solid #2a2a2a;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .error-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .error-header h3 {
+            color: #ef4444;
+            font-size: 1rem;
+        }
+
+        .error-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .error-item {
+            padding: 12px;
+            background: #131313;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ef4444;
+        }
+
+        .error-item .error-time {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .error-item .error-source {
+            font-size: 0.8rem;
+            color: #f59e0b;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .error-item .error-message {
+            font-size: 0.8rem;
+            color: #e0e0e0;
+            word-break: break-word;
+        }
+
+        .error-empty {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px 20px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Failed Item with Retry Button */
+        .failed-item {
+            padding: 12px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .failed-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .failed-address {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            color: #ef4444;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        .failed-reason {
+            color: #6b7280;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        .failed-item .retry-btn {
+            padding: 6px 12px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .failed-item .retry-btn:hover {
+            background: #3a3a3a;
+            border-color: #4a4a4a;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.6rem; }
+            .batch-summary { grid-template-columns: repeat(2, 1fr); }
+            .api-status-bar { gap: 8px; }
+            .api-status { padding: 4px 8px; font-size: 0.7rem; }
+        }
+
+        @media (max-width: 500px) {
+            .icon-btn { width: 30px; height: 30px; }
+            .history-actions .icon-btn { width: 28px; height: 28px; }
+        }
+
+        /* Data Settings Expandable */
+        .data-settings-toggle {
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 0;
+        }
+
+        .data-settings-toggle:hover {
+            color: #60a5fa;
+        }
+
+        .data-settings-content {
+            display: none;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .data-settings-content.active {
+            display: block;
+        }
+
+        .data-settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .data-settings-header h4 {
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .select-all-btn {
+            font-size: 0.7rem;
+            color: #3b82f6;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px 8px;
+        }
+
+        .select-all-btn:hover {
+            color: #60a5fa;
+        }
+
+        .data-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+        }
+
+        .data-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .data-checkbox input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: #3b82f6;
+        }
+
+        .data-checkbox label {
+            cursor: pointer;
+        }
+
+        /* Settings Tabs */
+        .settings-tabs {
+            display: flex;
+            border-bottom: 1px solid #2a2a2a;
+            margin-bottom: 16px;
+        }
+
+        .settings-tab {
+            padding: 10px 16px;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 0.85rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .settings-tab:hover {
+            color: #e0e0e0;
+        }
+
+        .settings-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .api-section {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #131313;
+            border-radius: 10px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .api-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .api-section-header svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* API Test Status in Settings */
+        .api-test-status {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .api-test-status.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .api-test-status.warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        .api-test-status.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .api-test-status.checking {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+
+        /* Handbook Modal */
+        .handbook-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .handbook-modal.active {
+            display: flex;
+        }
+
+        .handbook-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #2a2a2a;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .handbook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .handbook-header h3 {
+            color: #e0e0e0;
+            font-size: 1.1rem;
+        }
+
+        .handbook-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .handbook-section {
+            margin-bottom: 20px;
+        }
+
+        .handbook-section h4 {
+            color: #3b82f6;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .handbook-section p, .handbook-section li {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            margin-bottom: 6px;
+        }
+
+        .handbook-section ul {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .handbook-section code {
+            background: #131313;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.75rem;
+            color: #10b981;
+        }
+
+        .handbook-tip {
+            background: #1e293b;
+            border-left: 3px solid #3b82f6;
+            padding: 10px 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 10px 0;
+        }
+
+        .handbook-tip p {
+            margin: 0;
+            color: #cbd5e1;
+        }
+
+        .handbook-warning {
+            background: #292524;
+            border-left: 3px solid #f59e0b;
+            padding: 10px 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 10px 0;
+        }
+
+        .handbook-warning p {
+            margin: 0;
+            color: #fcd34d;
+        }
+
+        /* Welcome / First-Time Setup Modal */
+        .welcome-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-modal.active {
+            display: flex;
+        }
+
+        .welcome-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid #2a2a2a;
+            text-align: center;
+        }
+
+        .welcome-content h2 {
+            color: #fff;
+            margin: 0 0 8px 0;
+            font-size: 1.5rem;
+        }
+
+        .welcome-content .subtitle {
+            color: #9ca3af;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        .welcome-content .welcome-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .welcome-steps {
+            text-align: left;
+            background: #131313;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .welcome-steps h4 {
+            color: #3b82f6;
+            margin: 0 0 12px 0;
+            font-size: 0.9rem;
+        }
+
+        .welcome-steps ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #9ca3af;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .welcome-steps li {
+            margin-bottom: 8px;
+        }
+
+        .welcome-steps a {
+            color: #3b82f6;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .welcome-buttons button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .welcome-buttons .btn-primary {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .welcome-buttons .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .welcome-buttons .btn-secondary {
+            background: #374151;
+            color: #fff;
+        }
+
+        .welcome-buttons .btn-secondary:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Modal (First-time Setup) -->
+    <div id="welcomeModal" class="welcome-modal">
+        <div class="welcome-content">
+            <div class="welcome-icon">🔗</div>
+            <h2>Welcome to Wallet Tracker</h2>
+            <p class="subtitle">Track Tron, Ethereum, and Solana wallets in one place</p>
+            
+            <div class="welcome-steps">
+                <h4>⚡ Quick Setup (Required)</h4>
+                <ol>
+                    <li>Get free API keys from:
+                        <br>• <a href="https://tronscan.org" target="_blank">Tronscan</a> (Tron)
+                        <br>• <a href="https://etherscan.io/apis" target="_blank">Etherscan</a> (Ethereum)
+                        <br>• <a href="https://helius.dev" target="_blank">Helius</a> (Solana)
+                    </li>
+                    <li>Click <strong>Open Settings</strong> below</li>
+                    <li>Go to <strong>API Keys</strong> tab and enter your keys</li>
+                    <li>Click <strong>Save Settings</strong></li>
+                </ol>
+            </div>
+            
+            <div class="welcome-buttons">
+                <button class="btn-secondary" onclick="dismissWelcome()">Skip for Now</button>
+                <button class="btn-primary" onclick="openSettingsFromWelcome()">Open Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Wallet Tracker</h1>
+        </header>
+
+        <!-- API Status Bar -->
+        <div class="api-status-bar">
+            <div class="api-status" id="tronStatus">
+                <span class="dot checking"></span>
+                <span>Tron</span>
+            </div>
+            <div class="api-status" id="ethStatus">
+                <span class="dot checking"></span>
+                <span>Ethereum</span>
+            </div>
+            <div class="api-status" id="solStatus">
+                <span class="dot checking"></span>
+                <span>Solana</span>
+            </div>
+        </div>
+
+        <!-- Top Icons (Warning + Handbook + Settings) -->
+        <div class="top-icons">
+            <div class="top-icon" onclick="toggleErrorLog()" title="Error Log">
+                <span class="badge" id="errorBadge"></span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div class="top-icon" onclick="toggleHandbook()" title="User Handbook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    <line x1="8" y1="6" x2="16" y2="6"></line>
+                    <line x1="8" y1="10" x2="16" y2="10"></line>
+                    <line x1="8" y1="14" x2="12" y2="14"></line>
+                </svg>
+            </div>
+            <div class="top-icon" onclick="toggleSettings()" title="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Handbook Modal -->
+        <div id="handbookModal" class="handbook-modal">
+            <div class="handbook-content">
+                <div class="handbook-header">
+                    <h3>📖 User Handbook</h3>
+                    <button class="close-btn" onclick="toggleHandbook()">×</button>
+                </div>
+                <div class="handbook-body">
+                    
+                    <div class="handbook-section">
+                        <h4>🚀 Getting Started</h4>
+                        <p>Enter wallet addresses in the text area (one per line) and click <strong>Search</strong>. The tracker supports three blockchains:</p>
+                        <ul>
+                            <li><strong>Tron</strong> - Addresses start with <code>T</code> (34 characters)</li>
+                            <li><strong>Ethereum</strong> - Addresses start with <code>0x</code> (42 characters)</li>
+                            <li><strong>Solana</strong> - Base58 addresses (32-44 characters)</li>
+                        </ul>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>📊 Understanding the Data</h4>
+                        
+                        <p><strong>Transaction Count:</strong></p>
+                        <ul>
+                            <li><strong>Tron & Solana:</strong> Shows recent transactions. <code>50+</code> means the wallet has more than 50 transactions (API limit).</li>
+                            <li><strong>Ethereum:</strong> Shows <em>outgoing</em> transactions only (the nonce). Wallets that mainly receive funds may show 0.</li>
+                        </ul>
+                        
+                        <p><strong>Latest Transaction:</strong></p>
+                        <ul>
+                            <li>Shows days since last activity (e.g., "3 days", "Today").</li>
+                            <li>The sheet stores the actual timestamp for sorting.</li>
+                        </ul>
+                        
+                        <p><strong>Total Assets:</strong></p>
+                        <ul>
+                            <li>Includes native token + USDT + USDC balances.</li>
+                            <li>Other tokens are not currently included in the total.</li>
+                        </ul>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>⚡ API Status Indicators</h4>
+                        <p>The colored dots at the top show API connection status:</p>
+                        <ul>
+                            <li><span style="color:#10b981">●</span> <strong>Green:</strong> Connected and working</li>
+                            <li><span style="color:#f59e0b">●</span> <strong>Yellow (pulsing):</strong> Checking connection</li>
+                            <li><span style="color:#ef4444">●</span> <strong>Red:</strong> Connection failed - check your API key</li>
+                        </ul>
+                        <div class="handbook-tip">
+                            <p>💡 Click "Test APIs" in Settings to refresh the status indicators.</p>
+                        </div>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>📝 Google Sheets Integration</h4>
+                        <p>To save data to Google Sheets:</p>
+                        <ol style="padding-left: 20px; color: #9ca3af; font-size: 0.8rem;">
+                            <li>Create a Google Cloud project and enable the Sheets API</li>
+                            <li>Create a Service Account and download the JSON key</li>
+                            <li>Share your Google Sheet with the service account email</li>
+                            <li>Enter the credentials in Settings → Google Sheets</li>
+                        </ol>
+                        <div class="handbook-warning">
+                            <p>⚠️ The sheet must have a tab named "Explorer" for data to save correctly.</p>
+                        </div>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>🔑 API Keys</h4>
+                        <p>Get free API keys from:</p>
+                        <ul>
+                            <li><strong>Tron:</strong> <a href="https://tronscan.org" target="_blank" style="color:#3b82f6">tronscan.org</a> (register for Pro API)</li>
+                            <li><strong>Ethereum:</strong> <a href="https://etherscan.io/apis" target="_blank" style="color:#3b82f6">etherscan.io/apis</a></li>
+                            <li><strong>Solana:</strong> <a href="https://helius.dev" target="_blank" style="color:#3b82f6">helius.dev</a></li>
+                        </ul>
+                        <div class="handbook-tip">
+                            <p>💡 Free tiers have rate limits. Add delays between lookups for large batches.</p>
+                        </div>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>⚠️ Common Issues</h4>
+                        <ul>
+                            <li><strong>"CORS error":</strong> Usually means the API key is missing or invalid.</li>
+                            <li><strong>"N/A" in results:</strong> The API couldn't fetch that specific data point.</li>
+                            <li><strong>Sheet not saving:</strong> Check that the Sheets API is enabled and the service account has Editor access.</li>
+                            <li><strong>Rate limited:</strong> Wait a minute and try again, or reduce batch size.</li>
+                        </ul>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>💾 Data Fields</h4>
+                        <p>Click "📊 Data fields" to customize which data is displayed and exported. Unchecked fields will show as empty in the Google Sheet (columns are preserved for consistency).</p>
+                    </div>
+
+                    <div class="handbook-section">
+                        <h4>🔄 Retry Failed Lookups</h4>
+                        <p>If some wallets fail during batch processing:</p>
+                        <ul>
+                            <li>Click individual <strong>Retry</strong> buttons to retry one at a time</li>
+                            <li>Click <strong>Retry All</strong> to retry all failed addresses</li>
+                            <li>Click <strong>Copy Addresses</strong> to copy failed addresses to clipboard</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Log Modal -->
+        <div id="errorModal" class="error-modal">
+            <div class="error-content">
+                <div class="error-header">
+                    <h3>⚠️ Error Log</h3>
+                    <button class="close-btn" onclick="toggleErrorLog()">×</button>
+                </div>
+                <div class="error-list" id="errorList">
+                    <div class="error-empty">No errors logged</div>
+                </div>
+                <div class="error-actions">
+                    <button class="btn btn-secondary" onclick="clearErrorLog()">Clear All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="settings-modal">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h3>⚙️ Settings</h3>
+                    <button class="close-btn" onclick="toggleSettings()">×</button>
+                </div>
+                
+                <!-- Settings Tabs -->
+                <div class="settings-tabs">
+                    <div class="settings-tab active" onclick="switchSettingsTab('sheets')">Google Sheets</div>
+                    <div class="settings-tab" onclick="switchSettingsTab('apis')">API Keys</div>
+                </div>
+
+                <!-- Google Sheets Panel -->
+                <div id="sheetsPanel" class="settings-panel active">
+                    <div style="margin-bottom: 15px;">
+                        <div class="config-field">
+                            <label>Google Sheet ID</label>
+                            <input type="text" id="sheetId" placeholder="Sheet ID from URL">
+                        </div>
+                        <div class="config-field" style="margin-top: 12px;">
+                            <label>Service Account Email</label>
+                            <input type="text" id="serviceAccountEmail" placeholder="email@project.iam.gserviceaccount.com">
+                        </div>
+                        <div class="config-field" style="margin-top: 12px;">
+                            <label>Private Key</label>
+                            <textarea id="privateKey" placeholder="-----BEGIN PRIVATE KEY-----..." style="min-height: 100px; font-family: monospace; font-size: 0.75rem;"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="setup-guide">
+                        <div class="guide-header" onclick="toggleGuide()">
+                            <span>📖 How to set up Google Sheets</span>
+                            <span id="guideArrow">▼</span>
+                        </div>
+                        <div class="guide-content" id="guideContent">
+                            <ol>
+                                <li><strong>Create a Google Cloud Project</strong><br>
+                                    Go to <a href="https://console.cloud.google.com" target="_blank" style="color:#3b82f6">console.cloud.google.com</a> and create a new project</li>
+                                <li><strong>Enable Google Sheets API</strong><br>
+                                    In your project, go to APIs & Services → Enable APIs → Search for "Google Sheets API" and enable it</li>
+                                <li><strong>Create Service Account</strong><br>
+                                    Go to APIs & Services → Credentials → Create Credentials → Service Account</li>
+                                <li><strong>Generate Key</strong><br>
+                                    Click on your service account → Keys → Add Key → Create new key → JSON</li>
+                                <li><strong>Copy Credentials</strong><br>
+                                    From the downloaded JSON file, copy:<br>
+                                    • <code>client_email</code> → Service Account Email<br>
+                                    • <code>private_key</code> → Private Key</li>
+                                <li><strong>Share Your Sheet</strong><br>
+                                    Open your Google Sheet, click Share, and add the service account email as Editor</li>
+                                <li><strong>Get Sheet ID</strong><br>
+                                    From your sheet URL:<br>
+                                    <code style="font-size:0.7rem">docs.google.com/spreadsheets/d/<strong>[SHEET_ID]</strong>/edit</code></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Keys Panel -->
+                <div id="apisPanel" class="settings-panel">
+                    <!-- Tron API -->
+                    <div class="api-section">
+                        <div class="api-section-header">
+                            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#FF0013"/><path fill="#fff" d="M32 14L18 44h8l6-14 6 14h8L32 14z"/></svg>
+                            Tron (Tronscan)
+                        </div>
+                        <div class="config-field">
+                            <label>API Key</label>
+                            <input type="text" id="tronApiKey" placeholder="Get from tronscan.org">
+                        </div>
+                    </div>
+
+                    <!-- Ethereum API -->
+                    <div class="api-section">
+                        <div class="api-section-header">
+                            <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#627EEA"/><path fill="#fff" d="M16 4v9.2l7.8 3.5L16 4z" opacity="0.6"/><path fill="#fff" d="M16 4L8.2 16.7l7.8-3.5V4z"/></svg>
+                            Ethereum (Etherscan)
+                        </div>
+                        <div class="config-field">
+                            <label>API Key</label>
+                            <input type="text" id="ethApiKey" placeholder="Get from etherscan.io/apis">
+                        </div>
+                    </div>
+
+                    <!-- Solana API -->
+                    <div class="api-section">
+                        <div class="api-section-header">
+                            <svg viewBox="0 0 128 128"><circle cx="64" cy="64" r="60" fill="#000"/><defs><linearGradient id="solGradSettings" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00FFA3"/><stop offset="100%" style="stop-color:#DC1FFF"/></linearGradient></defs><path fill="url(#solGradSettings)" d="M30 88h52l16-16H30v16zm0-24h68l-16-16H30v16zm68-24H46l-16 16h68V40z"/></svg>
+                            Solana (Helius)
+                        </div>
+                        <div class="config-field">
+                            <label>API Key</label>
+                            <input type="text" id="solApiKey" placeholder="Get from helius.dev">
+                        </div>
+                    </div>
+
+                    <p style="font-size: 0.7rem; color: #6b7280; margin-top: 8px;">
+                        💡 Get free API keys: <a href="https://tronscan.org" target="_blank" style="color:#3b82f6">Tronscan</a> · <a href="https://etherscan.io/apis" target="_blank" style="color:#3b82f6">Etherscan</a> · <a href="https://helius.dev" target="_blank" style="color:#3b82f6">Helius</a>
+                    </p>
+                </div>
+                
+                <!-- API Test Status Message -->
+                <div id="apiTestStatus" class="api-test-status" style="display: none;"></div>
+                
+                <div class="settings-actions" style="margin-top: 16px;">
+                    <button class="toggle-btn save" onclick="saveSettings()">Save Settings</button>
+                    <button class="btn btn-secondary" onclick="testApisFromSettings()" style="margin-left: 8px;">Test APIs</button>
+                </div>
+                
+                <p style="font-size: 0.75rem; color: #4b5563; margin-top: 16px;">
+                    Settings are saved to browser localStorage
+                </p>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <textarea id="walletInput" placeholder="Enter wallet addresses (one per line) - Supports Tron, Ethereum, Solana&#10;&#10;Examples:&#10;TEwCywDsdJjZTsWjXUEY7A32eoqhJEiuTH (Tron)&#10;0x742d35Cc6634C0532925a3b844Bc9e7595f5bA12 (Ethereum)&#10;7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU (Solana)"></textarea>
+            
+            <div class="input-controls">
+                <button id="searchBtn" class="btn btn-primary" onclick="lookupWallets()">
+                    Search
+                </button>
+                <button id="cancelBtn" class="btn btn-cancel" onclick="cancelLookup()" style="display: none;">
+                    Cancel
+                </button>
+                <label class="btn btn-upload">
+                    Upload CSV
+                    <input type="file" id="csvUpload" accept=".csv" onchange="handleCSV(event)" style="display: none;">
+                </label>
+                <button class="btn btn-secondary" onclick="clearInput()">
+                    Clear
+                </button>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="saveToSheets" checked>
+                    <label for="saveToSheets">Save to Sheets</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="skipDuplicates">
+                    <label for="skipDuplicates">Skip duplicates</label>
+                </div>
+                <div class="data-settings-toggle" onclick="toggleDataSettings()">
+                    <span>📊 Data fields</span>
+                    <span id="dataSettingsArrow">▼</span>
+                </div>
+            </div>
+
+            <!-- Data Fields Selection -->
+            <div class="data-settings-content" id="dataSettingsContent">
+                <div class="data-settings-header">
+                    <h4>Select data to display & export</h4>
+                    <button class="select-all-btn" onclick="toggleAllDataFields()">Select All</button>
+                </div>
+                <div class="data-checkboxes">
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataAddress" checked disabled>
+                        <label for="dataAddress">Address</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataChain" checked disabled>
+                        <label for="dataChain">Chain</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataTotalAssets" checked>
+                        <label for="dataTotalAssets">Total Assets</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataNativeBalance" checked>
+                        <label for="dataNativeBalance">Native Balance</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataNativeUSD" checked>
+                        <label for="dataNativeUSD">Native USD Value</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataUSDT" checked>
+                        <label for="dataUSDT">USDT Balance</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataUSDC" checked>
+                        <label for="dataUSDC">USDC Balance</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataTxCount" checked>
+                        <label for="dataTxCount">Transaction Count</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataLatestTx" checked>
+                        <label for="dataLatestTx">Latest Transaction</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataNFTCount" checked>
+                        <label for="dataNFTCount">NFT Count</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataName" checked>
+                        <label for="dataName">Account Name</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataWebsite" checked>
+                        <label for="dataWebsite">Website</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataLookupDate" checked>
+                        <label for="dataLookupDate">Lookup Date</label>
+                    </div>
+                    <div class="data-checkbox">
+                        <input type="checkbox" id="dataExplorerLink" checked>
+                        <label for="dataExplorerLink">Explorer Link</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Processing...</div>
+            </div>
+        </div>
+
+        <div id="messageBox" class="message"></div>
+
+        <div class="batch-summary" id="batchSummary">
+            <div class="summary-box success">
+                <div class="number" id="successCount">0</div>
+                <div class="label">Success</div>
+            </div>
+            <div class="summary-box duplicates">
+                <div class="number" id="duplicateCount">0</div>
+                <div class="label">Duplicates</div>
+            </div>
+            <div class="summary-box failed">
+                <div class="number" id="failedCount">0</div>
+                <div class="label">Failed</div>
+            </div>
+            <div class="summary-box total">
+                <div class="number" id="totalTime">0s</div>
+                <div class="label">Time</div>
+            </div>
+        </div>
+
+        <div class="failed-list" id="failedList">
+            <h4 style="color: #ef4444; margin-bottom: 12px; font-size: 0.9rem;">Failed Wallets</h4>
+            <div id="failedItems"></div>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button class="btn btn-secondary" onclick="retryAllFailed()">Retry All</button>
+                <button class="btn btn-secondary" onclick="copyFailedAddresses()">Copy Addresses</button>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="explorer-result-card">
+                <div class="label">Wallet Address</div>
+                <div class="address-row">
+                    <div class="value cyan" id="displayAddress"></div>
+                    <div class="social-links" id="resultLinks"></div>
+                </div>
+            </div>
+            <div class="explorer-result-card" id="totalAssetsCard">
+                <div class="label">Total Assets Value</div>
+                <div class="value large" id="totalAssets"></div>
+            </div>
+            <div class="explorer-grid" id="balancesGrid">
+                <div class="explorer-result-card" id="nativeBalanceCard">
+                    <div class="label" id="nativeBalanceLabel">Native Balance</div>
+                    <div class="value" id="nativeBalance"></div>
+                </div>
+                <div class="explorer-result-card" id="usdtCard">
+                    <div class="label">USDT Balance</div>
+                    <div class="value" id="usdtBalance"></div>
+                </div>
+                <div class="explorer-result-card" id="usdcCard">
+                    <div class="label">USDC Balance</div>
+                    <div class="value" id="usdcBalance"></div>
+                </div>
+            </div>
+            <div class="explorer-grid" id="activityGrid">
+                <div class="explorer-result-card" id="txCountCard">
+                    <div class="label">Total Transactions</div>
+                    <div class="value" id="txnCount"></div>
+                </div>
+                <div class="explorer-result-card" id="latestTxCard">
+                    <div class="label">Latest Transaction</div>
+                    <div class="value" id="latestTxn"></div>
+                </div>
+                <div class="explorer-result-card" id="nftCountCard">
+                    <div class="label">Total NFTs</div>
+                    <div class="value" id="nftCount"></div>
+                </div>
+            </div>
+            <div class="explorer-grid" id="accountInfoGrid" style="display: none;">
+                <div class="explorer-result-card" id="accountNameCard" style="display: none;">
+                    <div class="label">Account Name</div>
+                    <div class="value" id="accountName"></div>
+                </div>
+                <div class="explorer-result-card" id="accountWebsiteCard" style="display: none;">
+                    <div class="label">Website</div>
+                    <div class="value" id="accountWebsite"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section" id="historySection">
+            <h2>
+                Recent Lookups
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-success" onclick="openSheet()" style="padding: 8px 14px; font-size: 0.8rem;">View Sheet</button>
+                    <button class="btn btn-secondary" onclick="exportCSV()" style="padding: 8px 14px; font-size: 0.8rem;">Export CSV</button>
+                    <button class="btn btn-secondary" onclick="confirmClearHistory()" style="padding: 8px 14px; font-size: 0.8rem;">Clear History</button>
+                </div>
+            </h2>
+            <div class="history-list" id="historyList"></div>
+            <div class="expand-link" id="expandLink">
+                <a onclick="toggleHistory()">Expand >></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        
+        // ⚠️ SECURITY WARNING: These are placeholder values.
+        // ============================================
+        // CONFIGURATION
+        // Each user must enter their own API keys
+        // Keys are stored in browser localStorage (private to each user)
+        // ============================================
+        
+        let CONFIG = {
+            // Google Sheets (Optional - for saving to Google Sheets)
+            SHEET_ID: '',
+            SERVICE_ACCOUNT_EMAIL: '',
+            PRIVATE_KEY: '',
+            
+            // Tron (Tronscan) - Get free key at https://tronscan.org
+            TRON_API_KEY: '',
+            TRON_API_BASE: 'https://apilist.tronscanapi.com/api',
+            
+            // Solana (Helius) - Get free key at https://helius.dev
+            HELIUS_API_KEY: '',
+            HELIUS_RPC_URL: '',
+            
+            // Ethereum (Etherscan) - Get free key at https://etherscan.io/apis
+            ETHERSCAN_API_KEY: ''
+        };
+
+        // SVG Icons
+        const tronLogoSvg = `<svg width="18" height="18" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#FF0013"/><path fill="#fff" d="M32 14L18 44h8l6-14 6 14h8L32 14z"/></svg>`;
+        const ethLogoSvg = `<svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#627EEA"/><path fill="#fff" d="M16 4v9.2l7.8 3.5L16 4z" opacity="0.6"/><path fill="#fff" d="M16 4L8.2 16.7l7.8-3.5V4z"/><path fill="#fff" d="M16 22.1v5.9l7.8-10.8-7.8 4.9z" opacity="0.6"/><path fill="#fff" d="M16 28v-5.9l-7.8-4.9L16 28z"/><path fill="#fff" d="M16 20.6l7.8-4.9L16 13.2v7.4z" opacity="0.2"/><path fill="#fff" d="M8.2 15.7l7.8 4.9v-7.4l-7.8 2.5z" opacity="0.6"/></svg>`;
+        const solLogoSvg = `<svg width="18" height="18" viewBox="0 0 128 128"><circle cx="64" cy="64" r="60" fill="#000"/><defs><linearGradient id="solGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00FFA3"/><stop offset="100%" style="stop-color:#DC1FFF"/></linearGradient></defs><path fill="url(#solGrad)" d="M30 88h52l16-16H30v16zm0-24h68l-16-16H30v16zm68-24H46l-16 16h68V40z"/></svg>`;
+        const googleSvg = `<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>`;
+        const twitterSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
+
+        // State
+        let isCancelled = false;
+        let failedWallets = [];
+        let historyExpanded = false;
+        let errorLog = [];
+        let unreadErrors = 0;
+
+        // ============================================
+        // ERROR LOG SYSTEM
+        // ============================================
+        
+        function logError(source, message) {
+            const error = {
+                time: new Date().toLocaleTimeString(),
+                source: source,
+                message: message
+            };
+            errorLog.unshift(error);
+            if (errorLog.length > 50) errorLog.pop(); // Keep last 50 errors
+            unreadErrors++;
+            updateErrorBadge();
+            renderErrorLog();
+            console.error(`[${source}]`, message);
+        }
+
+        function updateErrorBadge() {
+            const badge = document.getElementById('errorBadge');
+            if (unreadErrors > 0) {
+                badge.classList.add('active');
+            } else {
+                badge.classList.remove('active');
+            }
+        }
+
+        function toggleErrorLog() {
+            const modal = document.getElementById('errorModal');
+            modal.classList.toggle('active');
+            if (modal.classList.contains('active')) {
+                unreadErrors = 0;
+                updateErrorBadge();
+            }
+        }
+
+        function renderErrorLog() {
+            const container = document.getElementById('errorList');
+            if (errorLog.length === 0) {
+                container.innerHTML = '<div class="error-empty">No errors logged</div>';
+                return;
+            }
+            container.innerHTML = errorLog.map(err => `
+                <div class="error-item">
+                    <div class="error-time">${err.time}</div>
+                    <div class="error-source">${sanitizeHTML(err.source)}</div>
+                    <div class="error-message">${sanitizeHTML(err.message)}</div>
+                </div>
+            `).join('');
+        }
+
+        function clearErrorLog() {
+            errorLog = [];
+            unreadErrors = 0;
+            updateErrorBadge();
+            renderErrorLog();
+        }
+
+        // ============================================
+        // API STATUS INDICATORS
+        // ============================================
+        
+        function setApiStatus(chain, status) {
+            const el = document.getElementById(`${chain}Status`);
+            if (!el) return;
+            const dot = el.querySelector('.dot');
+            dot.classList.remove('connected', 'error', 'checking');
+            dot.classList.add(status);
+        }
+
+        async function checkApiStatus() {
+            // Check Tron API
+            setApiStatus('tron', 'checking');
+            try {
+                const response = await fetch(`${CONFIG.TRON_API_BASE}/system/status`, {
+                    headers: { 'TRON-PRO-API-KEY': CONFIG.TRON_API_KEY }
+                });
+                if (response.ok) {
+                    setApiStatus('tron', 'connected');
+                } else {
+                    setApiStatus('tron', 'error');
+                    logError('Tron API', `Status check failed: ${response.status}`);
+                }
+            } catch (e) {
+                // Try a simple account check as fallback
+                try {
+                    const fallbackResp = await fetch(`${CONFIG.TRON_API_BASE}/account?address=TQH5ZQjyxjZsUt2gxLaKs5tdP6VSWJxw5w`, {
+                        headers: { 'TRON-PRO-API-KEY': CONFIG.TRON_API_KEY }
+                    });
+                    if (fallbackResp.ok) {
+                        setApiStatus('tron', 'connected');
+                    } else {
+                        setApiStatus('tron', 'error');
+                        logError('Tron API', `Connection failed: ${fallbackResp.status}`);
+                    }
+                } catch (e2) {
+                    setApiStatus('tron', 'error');
+                    logError('Tron API', e2.message);
+                }
+            }
+
+            // Check Ethereum API
+            setApiStatus('eth', 'checking');
+            try {
+                const response = await fetch(`https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice&apikey=${CONFIG.ETHERSCAN_API_KEY}`);
+                const data = await response.json();
+                if (response.ok && data.status === '1') {
+                    setApiStatus('eth', 'connected');
+                } else {
+                    setApiStatus('eth', 'error');
+                    logError('Ethereum API', data.message || 'Connection failed');
+                }
+            } catch (e) {
+                setApiStatus('eth', 'error');
+                logError('Ethereum API', e.message);
+            }
+
+            // Check Solana API (Helius)
+            setApiStatus('sol', 'checking');
+            try {
+                const response = await fetch(CONFIG.HELIUS_RPC_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 'health-check',
+                        method: 'getHealth'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && (data.result === 'ok' || !data.error)) {
+                    setApiStatus('sol', 'connected');
+                } else {
+                    setApiStatus('sol', 'error');
+                    logError('Solana API', data.error?.message || 'Connection failed');
+                }
+            } catch (e) {
+                setApiStatus('sol', 'error');
+                logError('Solana API', e.message);
+            }
+
+            // Return status for use by callers
+            const tronOk = document.getElementById('tronStatus')?.querySelector('.dot')?.classList.contains('connected');
+            const ethOk = document.getElementById('ethStatus')?.querySelector('.dot')?.classList.contains('connected');
+            const solOk = document.getElementById('solStatus')?.querySelector('.dot')?.classList.contains('connected');
+            
+            return { tronOk, ethOk, solOk };
+        }
+
+        // Test APIs from Settings modal - shows result in the modal
+        async function testApisFromSettings() {
+            const statusEl = document.getElementById('apiTestStatus');
+            statusEl.style.display = 'flex';
+            statusEl.className = 'api-test-status checking';
+            statusEl.innerHTML = '⏳ Testing API connections...';
+            
+            const { tronOk, ethOk, solOk } = await checkApiStatus();
+            const allOk = tronOk && ethOk && solOk;
+            const connectedCount = [tronOk, ethOk, solOk].filter(Boolean).length;
+            
+            // Build detailed status
+            const statuses = [
+                `Tron: ${tronOk ? '✓' : '✗'}`,
+                `Ethereum: ${ethOk ? '✓' : '✗'}`,
+                `Solana: ${solOk ? '✓' : '✗'}`
+            ].join(' · ');
+            
+            if (allOk) {
+                statusEl.className = 'api-test-status success';
+                statusEl.innerHTML = `✓ All APIs connected · ${statuses}`;
+            } else if (connectedCount > 0) {
+                statusEl.className = 'api-test-status warning';
+                statusEl.innerHTML = `⚠ ${connectedCount}/3 connected · ${statuses}`;
+            } else {
+                statusEl.className = 'api-test-status error';
+                statusEl.innerHTML = `✗ All connections failed · Check API keys`;
+            }
+        }
+
+        // ============================================
+        // HANDBOOK
+        // ============================================
+        
+        function toggleHandbook() {
+            document.getElementById('handbookModal').classList.toggle('active');
+        }
+
+        // ============================================
+        // WELCOME / FIRST-TIME SETUP
+        // ============================================
+        
+        function checkFirstTimeUser() {
+            const hasAnyApiKey = CONFIG.TRON_API_KEY || CONFIG.ETHERSCAN_API_KEY || CONFIG.HELIUS_API_KEY;
+            const hasSeenWelcome = localStorage.getItem('walletTrackerWelcomeSeen');
+            
+            if (!hasAnyApiKey && !hasSeenWelcome) {
+                document.getElementById('welcomeModal').classList.add('active');
+            }
+        }
+        
+        function dismissWelcome() {
+            document.getElementById('welcomeModal').classList.remove('active');
+            localStorage.setItem('walletTrackerWelcomeSeen', 'true');
+        }
+        
+        function openSettingsFromWelcome() {
+            document.getElementById('welcomeModal').classList.remove('active');
+            localStorage.setItem('walletTrackerWelcomeSeen', 'true');
+            toggleSettings();
+            // Switch to API Keys tab
+            switchSettingsTab('apis');
+        }
+
+        // ============================================
+        // FAILED WALLETS - ENHANCED
+        // ============================================
+        
+        function renderFailedWallets() {
+            const container = document.getElementById('failedItems');
+            if (failedWallets.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = failedWallets.map((f, index) => `
+                <div class="failed-item">
+                    <div class="failed-item-info">
+                        <div class="failed-address">${sanitizeHTML(f.address)}</div>
+                        <div class="failed-reason">${sanitizeHTML(f.reason)}</div>
+                    </div>
+                    <button class="retry-btn" onclick="retrySingleFailed(${index})">Retry</button>
+                </div>
+            `).join('');
+        }
+
+        async function retrySingleFailed(index) {
+            if (index < 0 || index >= failedWallets.length) return;
+            
+            const failed = failedWallets[index];
+            const btn = document.querySelectorAll('.failed-item .retry-btn')[index];
+            if (btn) {
+                btn.textContent = '...';
+                btn.disabled = true;
+            }
+            
+            try {
+                const data = await fetchWalletData(failed.address);
+                const shouldSave = document.getElementById('saveToSheets').checked;
+                if (shouldSave) await saveToSheet(data);
+                saveHistory(data, false);
+                displayResults(data);
+                
+                // Remove from failed list
+                failedWallets.splice(index, 1);
+                renderFailedWallets();
+                
+                // Update counts
+                const failedCountEl = document.getElementById('failedCount');
+                failedCountEl.textContent = failedWallets.length;
+                
+                if (failedWallets.length === 0) {
+                    document.getElementById('failedList').classList.remove('active');
+                }
+                
+                showMessage('success', `✓ Successfully retrieved ${failed.address.slice(0, 8)}...`);
+            } catch (e) {
+                // Update the error message
+                failedWallets[index].reason = e.message;
+                renderFailedWallets();
+                logError('Retry Failed', `${failed.address}: ${e.message}`);
+                showMessage('error', `Failed: ${e.message}`);
+            }
+            
+            if (btn) {
+                btn.textContent = 'Retry';
+                btn.disabled = false;
+            }
+        }
+
+        function retryAllFailed() {
+            if (failedWallets.length === 0) return;
+            document.getElementById('walletInput').value = failedWallets.map(f => f.address).join('\n');
+            failedWallets = [];
+            renderFailedWallets();
+            document.getElementById('failedList').classList.remove('active');
+            lookupWallets();
+        }
+
+        function copyFailedAddresses() {
+            if (failedWallets.length === 0) return;
+            const addresses = failedWallets.map(f => f.address).join('\n');
+            navigator.clipboard.writeText(addresses).then(() => {
+                showMessage('success', `✓ Copied ${failedWallets.length} addresses to clipboard`);
+            }).catch(() => {
+                showMessage('error', 'Failed to copy to clipboard');
+            });
+        }
+
+        // ============================================
+        // SETTINGS
+        // ============================================
+        
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('active');
+            // Hide API test status when closing/opening modal
+            const statusEl = document.getElementById('apiTestStatus');
+            if (statusEl) statusEl.style.display = 'none';
+        }
+
+        function switchSettingsTab(tab) {
+            // Update tabs
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+            
+            // Hide API test status when switching tabs
+            const statusEl = document.getElementById('apiTestStatus');
+            if (statusEl) statusEl.style.display = 'none';
+            
+            if (tab === 'sheets') {
+                document.querySelector('.settings-tab:nth-child(1)').classList.add('active');
+                document.getElementById('sheetsPanel').classList.add('active');
+            } else if (tab === 'apis') {
+                document.querySelector('.settings-tab:nth-child(2)').classList.add('active');
+                document.getElementById('apisPanel').classList.add('active');
+            }
+        }
+
+        function toggleGuide() {
+            const content = document.getElementById('guideContent');
+            const arrow = document.getElementById('guideArrow');
+            content.classList.toggle('active');
+            arrow.textContent = content.classList.contains('active') ? '▲' : '▼';
+        }
+
+        function toggleDataSettings() {
+            const content = document.getElementById('dataSettingsContent');
+            const arrow = document.getElementById('dataSettingsArrow');
+            content.classList.toggle('active');
+            arrow.textContent = content.classList.contains('active') ? '▲' : '▼';
+        }
+
+        function toggleAllDataFields() {
+            const checkboxes = document.querySelectorAll('.data-checkbox input[type="checkbox"]:not(:disabled)');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            saveDataFieldSettings();
+        }
+
+        function getSelectedDataFields() {
+            return {
+                totalAssets: document.getElementById('dataTotalAssets')?.checked ?? true,
+                nativeBalance: document.getElementById('dataNativeBalance')?.checked ?? true,
+                nativeUSD: document.getElementById('dataNativeUSD')?.checked ?? true,
+                usdt: document.getElementById('dataUSDT')?.checked ?? true,
+                usdc: document.getElementById('dataUSDC')?.checked ?? true,
+                txCount: document.getElementById('dataTxCount')?.checked ?? true,
+                latestTx: document.getElementById('dataLatestTx')?.checked ?? true,
+                nftCount: document.getElementById('dataNFTCount')?.checked ?? true,
+                name: document.getElementById('dataName')?.checked ?? true,
+                website: document.getElementById('dataWebsite')?.checked ?? true,
+                lookupDate: document.getElementById('dataLookupDate')?.checked ?? true,
+                explorerLink: document.getElementById('dataExplorerLink')?.checked ?? true
+            };
+        }
+
+        function saveDataFieldSettings() {
+            const fields = getSelectedDataFields();
+            localStorage.setItem('walletTrackerDataFields', JSON.stringify(fields));
+        }
+
+        function loadDataFieldSettings() {
+            const saved = localStorage.getItem('walletTrackerDataFields');
+            if (saved) {
+                try {
+                    const fields = JSON.parse(saved);
+                    if (fields.totalAssets !== undefined) document.getElementById('dataTotalAssets').checked = fields.totalAssets;
+                    if (fields.nativeBalance !== undefined) document.getElementById('dataNativeBalance').checked = fields.nativeBalance;
+                    if (fields.nativeUSD !== undefined) document.getElementById('dataNativeUSD').checked = fields.nativeUSD;
+                    if (fields.usdt !== undefined) document.getElementById('dataUSDT').checked = fields.usdt;
+                    if (fields.usdc !== undefined) document.getElementById('dataUSDC').checked = fields.usdc;
+                    if (fields.txCount !== undefined) document.getElementById('dataTxCount').checked = fields.txCount;
+                    if (fields.latestTx !== undefined) document.getElementById('dataLatestTx').checked = fields.latestTx;
+                    if (fields.nftCount !== undefined) document.getElementById('dataNFTCount').checked = fields.nftCount;
+                    if (fields.name !== undefined) document.getElementById('dataName').checked = fields.name;
+                    if (fields.website !== undefined) document.getElementById('dataWebsite').checked = fields.website;
+                    if (fields.lookupDate !== undefined) document.getElementById('dataLookupDate').checked = fields.lookupDate;
+                    if (fields.explorerLink !== undefined) document.getElementById('dataExplorerLink').checked = fields.explorerLink;
+                } catch (e) {
+                    console.warn('Invalid data field settings in localStorage, resetting...');
+                    localStorage.removeItem('walletTrackerDataFields');
+                }
+            }
+            // Add change listeners
+            document.querySelectorAll('.data-checkbox input[type="checkbox"]:not(:disabled)').forEach(cb => {
+                cb.addEventListener('change', saveDataFieldSettings);
+            });
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('walletTrackerConfig');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.SHEET_ID) CONFIG.SHEET_ID = parsed.SHEET_ID;
+                    if (parsed.SERVICE_ACCOUNT_EMAIL) CONFIG.SERVICE_ACCOUNT_EMAIL = parsed.SERVICE_ACCOUNT_EMAIL;
+                    if (parsed.PRIVATE_KEY) CONFIG.PRIVATE_KEY = parsed.PRIVATE_KEY;
+                    // Load API keys from localStorage if saved
+                    if (parsed.TRON_API_KEY) CONFIG.TRON_API_KEY = parsed.TRON_API_KEY;
+                    if (parsed.HELIUS_API_KEY) CONFIG.HELIUS_API_KEY = parsed.HELIUS_API_KEY;
+                    if (parsed.HELIUS_RPC_URL) CONFIG.HELIUS_RPC_URL = parsed.HELIUS_RPC_URL;
+                    if (parsed.ETHERSCAN_API_KEY) CONFIG.ETHERSCAN_API_KEY = parsed.ETHERSCAN_API_KEY;
+                } catch (e) {
+                    console.warn('Invalid config in localStorage, resetting...');
+                    localStorage.removeItem('walletTrackerConfig');
+                }
+            }
+            // Google Sheets settings
+            document.getElementById('sheetId').value = CONFIG.SHEET_ID;
+            document.getElementById('serviceAccountEmail').value = CONFIG.SERVICE_ACCOUNT_EMAIL;
+            document.getElementById('privateKey').value = CONFIG.PRIVATE_KEY;
+            
+            // API keys
+            document.getElementById('tronApiKey').value = CONFIG.TRON_API_KEY;
+            document.getElementById('ethApiKey').value = CONFIG.ETHERSCAN_API_KEY;
+            document.getElementById('solApiKey').value = CONFIG.HELIUS_API_KEY;
+            
+            const hasConfig = CONFIG.SHEET_ID && CONFIG.SERVICE_ACCOUNT_EMAIL && CONFIG.PRIVATE_KEY;
+            document.getElementById('saveToSheets').checked = hasConfig;
+            
+            // Load data field settings
+            loadDataFieldSettings();
+            
+            // Check if first-time user (no API keys configured)
+            checkFirstTimeUser();
+        }
+
+        function saveSettings() {
+            // Google Sheets settings
+            CONFIG.SHEET_ID = document.getElementById('sheetId').value.trim();
+            CONFIG.SERVICE_ACCOUNT_EMAIL = document.getElementById('serviceAccountEmail').value.trim();
+            CONFIG.PRIVATE_KEY = document.getElementById('privateKey').value.trim();
+            
+            // API keys
+            CONFIG.TRON_API_KEY = document.getElementById('tronApiKey').value.trim();
+            CONFIG.ETHERSCAN_API_KEY = document.getElementById('ethApiKey').value.trim();
+            CONFIG.HELIUS_API_KEY = document.getElementById('solApiKey').value.trim();
+            CONFIG.HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${CONFIG.HELIUS_API_KEY}`;
+            
+            localStorage.setItem('walletTrackerConfig', JSON.stringify(CONFIG));
+            
+            // Mark welcome as seen if user has saved any API key
+            if (CONFIG.TRON_API_KEY || CONFIG.ETHERSCAN_API_KEY || CONFIG.HELIUS_API_KEY) {
+                localStorage.setItem('walletTrackerWelcomeSeen', 'true');
+            }
+            
+            const hasConfig = CONFIG.SHEET_ID && CONFIG.SERVICE_ACCOUNT_EMAIL && CONFIG.PRIVATE_KEY;
+            document.getElementById('saveToSheets').checked = hasConfig;
+            
+            toggleSettings();
+            showMessage('success', '✓ Settings saved!');
+        }
+
+        function openSheet() {
+            window.open(`https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}`, '_blank');
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        
+        // Chain detection
+        function detectChain(addr) {
+            if (!addr) return 'unknown';
+            if (/^T[A-Za-z1-9]{33}$/.test(addr)) return 'tron';
+            if (/^0x[a-fA-F0-9]{40}$/.test(addr)) return 'ethereum';
+            if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr)) return 'solana';
+            return 'unknown';
+        }
+        
+        function isValidAddress(addr) {
+            return detectChain(addr) !== 'unknown';
+        }
+
+        function parseWallets(input) {
+            const lines = input.split('\n').map(l => l.trim()).filter(l => l);
+            const wallets = [], invalid = [];
+            lines.forEach(l => { isValidAddress(l) ? wallets.push(l) : invalid.push(l); });
+            return { wallets, invalid };
+        }
+
+        function showMessage(type, text) {
+            const el = document.getElementById('messageBox');
+            el.className = `message ${type} active`;
+            el.textContent = text;
+        }
+
+        function hideMessage() {
+            document.getElementById('messageBox').classList.remove('active');
+        }
+
+        function clearInput() {
+            document.getElementById('walletInput').value = '';
+            document.getElementById('csvUpload').value = '';
+        }
+
+        function getGoogleSearchUrl(wallet) {
+            return `https://www.google.com/search?q=${encodeURIComponent(wallet)}`;
+        }
+
+        function getTwitterSearchUrl(wallet) {
+            return `https://twitter.com/search?q=${encodeURIComponent(wallet)}&f=live`;
+        }
+
+        function getExplorerUrl(wallet, chain) {
+            if (!chain) chain = detectChain(wallet);
+            const encodedWallet = encodeURIComponent(wallet);
+            switch (chain) {
+                case 'tron': return `https://tronscan.org/#/address/${encodedWallet}`;
+                case 'ethereum': return `https://etherscan.io/address/${encodedWallet}`;
+                case 'solana': return `https://solscan.io/account/${encodedWallet}`;
+                default: return `https://www.google.com/search?q=${encodedWallet}`;
+            }
+        }
+
+        function getChainIcon(chain) {
+            switch (chain) {
+                case 'tron': return tronLogoSvg;
+                case 'ethereum': return ethLogoSvg;
+                case 'solana': return solLogoSvg;
+                default: return '';
+            }
+        }
+
+        function createLinkButtons(wallet) {
+            const chain = detectChain(wallet);
+            const explorerIcon = getChainIcon(chain);
+            const explorerTitle = chain === 'tron' ? 'Tronscan' : chain === 'ethereum' ? 'Etherscan' : chain === 'solana' ? 'Solscan' : 'Explorer';
+            return `
+                <a href="${getGoogleSearchUrl(wallet)}" target="_blank" class="icon-btn" title="Search Google">${googleSvg}</a>
+                <a href="${getTwitterSearchUrl(wallet)}" target="_blank" class="icon-btn" title="Search Twitter">${twitterSvg}</a>
+                <a href="${getExplorerUrl(wallet, chain)}" target="_blank" class="icon-btn" title="${explorerTitle}">${explorerIcon}</a>
+            `;
+        }
+
+        // Sanitize string for safe HTML display (prevent XSS)
+        function sanitizeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[<>"'&]/g, char => ({
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '&': '&amp;'
+            }[char]));
+        }
+
+        // Validate URL protocol to prevent javascript: and data: injection
+        function isValidUrl(str) {
+            if (!str) return false;
+            try {
+                const url = new URL(str);
+                return ['http:', 'https:'].includes(url.protocol);
+            } catch {
+                // If no protocol, check if it looks like a domain
+                if (/^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(str)) {
+                    return true; // Will prepend https://
+                }
+                return false;
+            }
+        }
+
+        // Safely format URL for href attribute
+        function safeUrl(str) {
+            if (!str) return '';
+            str = str.trim();
+            // If valid URL with protocol, return as-is
+            try {
+                const url = new URL(str);
+                if (['http:', 'https:'].includes(url.protocol)) {
+                    return str;
+                }
+                return ''; // Reject javascript:, data:, etc.
+            } catch {
+                // No protocol - prepend https:// if it looks like a domain
+                if (/^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(str)) {
+                    return 'https://' + str;
+                }
+                return '';
+            }
+        }
+
+        // ============================================
+        // CSV HANDLING
+        // ============================================
+        
+        function handleCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wallets = new Set();
+                e.target.result.split(/\r?\n/).forEach(line => {
+                    line.split(/[,;\t]/).forEach(cell => {
+                        const trimmed = cell.trim().replace(/^["']|["']$/g, '');
+                        if (isValidAddress(trimmed)) wallets.add(trimmed);
+                    });
+                });
+                if (!wallets.size) { showMessage('error', 'No valid addresses found in CSV'); return; }
+                const textarea = document.getElementById('walletInput');
+                textarea.value = (textarea.value.trim() ? textarea.value.trim() + '\n' : '') + [...wallets].join('\n');
+                showMessage('success', `✓ Found ${wallets.size} addresses in CSV`);
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ============================================
+        // GOOGLE SHEETS AUTH
+        // ============================================
+        
+        async function getAccessToken() {
+            try {
+                const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).replace(/=/g, '');
+                const now = Math.floor(Date.now() / 1000);
+                const claim = { iss: CONFIG.SERVICE_ACCOUNT_EMAIL, scope: 'https://www.googleapis.com/auth/spreadsheets', aud: 'https://oauth2.googleapis.com/token', exp: now + 3600, iat: now };
+                const claimStr = btoa(JSON.stringify(claim)).replace(/=/g, '');
+                const signatureInput = header + '.' + claimStr;
+                const pemContents = CONFIG.PRIVATE_KEY.replace('-----BEGIN PRIVATE KEY-----', '').replace('-----END PRIVATE KEY-----', '').replace(/\s/g, '');
+                const binaryDer = atob(pemContents);
+                const binaryArray = new Uint8Array(binaryDer.length);
+                for (let i = 0; i < binaryDer.length; i++) binaryArray[i] = binaryDer.charCodeAt(i);
+                const key = await crypto.subtle.importKey('pkcs8', binaryArray, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+                const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signatureInput));
+                const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                const jwt = signatureInput + '.' + signatureB64;
+                const tokenResponse = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}` });
+                const tokenData = await tokenResponse.json();
+                if (tokenData.error) {
+                    logError('Google Auth', `${tokenData.error}: ${tokenData.error_description || ''}`);
+                    return null;
+                }
+                return tokenData.access_token;
+            } catch (error) {
+                logError('Google Auth', error.message);
+                return null;
+            }
+        }
+
+        // ============================================
+        // HISTORY
+        // ============================================
+        
+        const MAX_HISTORY_SIZE = 500;
+        
+        function loadHistory() { 
+            try {
+                return JSON.parse(localStorage.getItem('walletHistory') || '[]'); 
+            } catch (e) {
+                console.warn('Invalid history in localStorage, resetting...');
+                localStorage.removeItem('walletHistory');
+                return [];
+            }
+        }
+        
+        function checkDuplicate(addr) { 
+            return loadHistory().some(i => i.address.toLowerCase() === addr.toLowerCase()); 
+        }
+
+        function saveHistory(data, isDuplicate = false) {
+            let history = loadHistory();
+            history.unshift({ 
+                address: data.address, 
+                chain: data.chain || detectChain(data.address),
+                totalAssets: data.totalAssets, 
+                latestTxn: data.latestTxn, 
+                timestamp: new Date().toISOString(),
+                isDuplicate: isDuplicate
+            });
+            if (history.length > MAX_HISTORY_SIZE) history = history.slice(0, MAX_HISTORY_SIZE);
+            localStorage.setItem('walletHistory', JSON.stringify(history));
+            displayHistory();
+        }
+
+        function displayHistory() {
+            const history = loadHistory();
+            const section = document.getElementById('historySection');
+            if (history.length === 0) { section.classList.remove('active'); return; }
+            section.classList.add('active');
+            const count = historyExpanded ? history.length : Math.min(5, history.length);
+            document.getElementById('expandLink').querySelector('a').textContent = historyExpanded ? '<< Collapse' : `Expand (${history.length}) >>`;
+            
+            const addressCounts = {};
+            history.forEach(item => {
+                const addr = item.address.toLowerCase();
+                addressCounts[addr] = (addressCounts[addr] || 0) + 1;
+            });
+            
+            document.getElementById('historyList').innerHTML = history.slice(0, count).map((item) => {
+                const addr = item.address.toLowerCase();
+                const isDup = addressCounts[addr] > 1;
+                const dupBadge = isDup ? `<span class="dup-badge">Duplicate</span>` : '';
+                const chain = detectChain(item.address);
+                const chainBadge = `<span class="chain-badge ${chain}">${chain.toUpperCase()}</span>`;
+                
+                return `
+                    <div class="history-item ${isDup ? 'duplicate' : ''}">
+                        <div class="history-item-left">
+                            <div class="history-wallet">${chainBadge} ${sanitizeHTML(item.address)} ${dupBadge}</div>
+                            <div class="history-details">💰 $${Math.round(item.totalAssets).toLocaleString()} • 🕒 Last TXN: ${sanitizeHTML(item.latestTxn)}</div>
+                        </div>
+                        <div class="history-actions">
+                            ${createLinkButtons(item.address)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleHistory() { historyExpanded = !historyExpanded; displayHistory(); }
+
+        function exportCSV() {
+            const history = loadHistory();
+            if (history.length === 0) {
+                showMessage('warning', 'No history to export');
+                return;
+            }
+            
+            // Helper to escape CSV cell values (escape double quotes)
+            const escapeCSV = (val) => `"${String(val).replace(/"/g, '""')}"`;
+            
+            const headers = ['Address', 'Chain', 'Total Assets (USD)', 'Last TXN', 'Lookup Date', 'Tronscan/Explorer', 'Google Search', 'Twitter Search'];
+            const rows = history.map(item => {
+                const chain = detectChain(item.address);
+                const explorerUrl = getExplorerUrl(item.address, chain);
+                return [
+                    item.address,
+                    chain.toUpperCase(),
+                    Math.round(item.totalAssets || 0),
+                    item.latestTxn || 'N/A',
+                    item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A',
+                    explorerUrl,
+                    getGoogleSearchUrl(item.address),
+                    getTwitterSearchUrl(item.address)
+                ];
+            });
+            
+            const csvContent = [headers, ...rows].map(row => row.map(escapeCSV).join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `wallet-tracker-export-${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            showMessage('success', `✓ Exported ${history.length} records to CSV`);
+        }
+
+        function confirmClearHistory() {
+            if (loadHistory().length === 0) {
+                showMessage('warning', 'History is already empty');
+                return;
+            }
+            if (confirm('Are you sure you want to clear all lookup history?\n\nThis cannot be undone.')) {
+                localStorage.removeItem('walletHistory');
+                displayHistory();
+                showMessage('success', '✓ History cleared');
+            }
+        }
+
+        // ============================================
+        // BLOCKCHAIN APIs
+        // ============================================
+        
+        // TRON API (Tronscan)
+        async function fetchTronAPI(endpoint) {
+            const response = await fetch(`${CONFIG.TRON_API_BASE}${endpoint}`, { 
+                headers: { 'Accept': 'application/json', 'TRON-PRO-API-KEY': CONFIG.TRON_API_KEY } 
+            });
+            if (!response.ok) throw new Error(`Tron API error ${response.status}`);
+            return await response.json();
+        }
+
+        async function fetchTronWalletData(address) {
+            const accountData = await fetchTronAPI(`/account?address=${address}`);
+            const txnCount = accountData.totalTransactionCount || 0;
+            const name = accountData.name || accountData.account_name || '';
+            const website = accountData.representative?.url || accountData.url || '';
+
+            let stakedTrx = 0;
+            if (accountData.frozenV2 && Array.isArray(accountData.frozenV2)) accountData.frozenV2.forEach(f => stakedTrx += (f.amount || 0));
+            if (accountData.frozen && Array.isArray(accountData.frozen)) accountData.frozen.forEach(f => stakedTrx += (f.frozen_balance || 0));
+            if (accountData.account_resource) {
+                stakedTrx += (accountData.account_resource.frozen_balance_for_energy?.frozen_balance || 0);
+                stakedTrx += (accountData.account_resource.delegated_frozen_balance_for_energy || 0);
+            }
+            stakedTrx = stakedTrx / 1e6;
+
+            const tokensData = await fetchTronAPI(`/account/tokens?address=${address}&start=0&limit=100`);
+            let nativeBalance = 0, usdtBalance = 0, usdcBalance = 0, nativePrice = 0;
+            if (tokensData.data) {
+                tokensData.data.forEach(token => {
+                    if (token.tokenId === '_') { nativeBalance = parseFloat(token.quantity) || 0; nativePrice = parseFloat(token.tokenPriceInUsd) || 0; }
+                    else if (token.tokenAbbr === 'USDT') usdtBalance = parseFloat(token.quantity) || 0;
+                    else if (token.tokenAbbr === 'USDC') usdcBalance = parseFloat(token.quantity) || 0;
+                });
+            }
+            nativeBalance += stakedTrx;
+            const totalAssetsUSD = (nativeBalance * nativePrice) + usdtBalance + usdcBalance;
+
+            let nftCount = 0;
+            try { nftCount = (await fetchTronAPI(`/account/nft/balance?address=${address}`)).total || 0; } catch (e) { /* NFT count optional */ }
+
+            let latestDateDisplay = 'N/A', latestDateTimestamp = '';
+            try {
+                const txData = await fetchTronAPI(`/transaction?sort=-timestamp&count=true&limit=1&start=0&address=${address}`);
+                if (txData.data && txData.data[0]?.timestamp) {
+                    const txDate = new Date(txData.data[0].timestamp);
+                    latestDateTimestamp = txDate.toISOString().slice(0, 16).replace('T', ' ');
+                    const diffDays = Math.floor((Date.now() - txDate) / (1000 * 60 * 60 * 24));
+                    latestDateDisplay = diffDays < 1 ? 'Today' : diffDays === 1 ? '1 day' : `${diffDays} days`;
+                }
+            } catch (e) { /* Transaction data optional */ }
+
+            return { 
+                address, chain: 'tron', nativeSymbol: 'TRX',
+                totalAssets: totalAssetsUSD, nativeBalance, nativePrice, 
+                usdtBalance, usdcBalance, txnCount, 
+                latestTxn: latestDateDisplay, latestTxnTimestamp: latestDateTimestamp, 
+                nftCount, name, website 
+            };
+        }
+
+        // ETHEREUM API (V2)
+        async function fetchEtherscanAPI(module, action, params = {}) {
+            const queryParams = new URLSearchParams({
+                module, action, apikey: CONFIG.ETHERSCAN_API_KEY, ...params
+            });
+            const response = await fetch(`https://api.etherscan.io/v2/api?chainid=1&${queryParams}`);
+            if (!response.ok) throw new Error(`Etherscan API error ${response.status}`);
+            const data = await response.json();
+            if (data.status === '0' && data.message !== 'No transactions found' && data.message !== 'No records found') {
+                throw new Error(data.result || data.message || 'Etherscan API error');
+            }
+            return data;
+        }
+
+        async function fetchEthWalletData(address) {
+            // Get ETH balance
+            const balanceData = await fetchEtherscanAPI('account', 'balance', { address, tag: 'latest' });
+            const nativeBalance = parseFloat(balanceData.result) / 1e18;
+            
+            // Get ETH price
+            const priceData = await fetchEtherscanAPI('stats', 'ethprice');
+            const nativePrice = parseFloat(priceData.result?.ethusd) || 0;
+            
+            // Get token balances (USDT and USDC on Ethereum)
+            let usdtBalance = 0, usdcBalance = 0;
+            try {
+                const usdtContract = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+                const usdcContract = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+                
+                const usdtData = await fetchEtherscanAPI('account', 'tokenbalance', { 
+                    contractaddress: usdtContract, address, tag: 'latest' 
+                });
+                usdtBalance = parseFloat(usdtData.result) / 1e6;
+                
+                const usdcData = await fetchEtherscanAPI('account', 'tokenbalance', { 
+                    contractaddress: usdcContract, address, tag: 'latest' 
+                });
+                usdcBalance = parseFloat(usdcData.result) / 1e6;
+            } catch (e) { /* Token balance optional */ }
+
+            const totalAssetsUSD = (nativeBalance * nativePrice) + usdtBalance + usdcBalance;
+
+            // Get transaction count and latest
+            let txnCount = 0, latestDateDisplay = 'N/A', latestDateTimestamp = '';
+            try {
+                const txData = await fetchEtherscanAPI('account', 'txlist', { 
+                    address, startblock: 0, endblock: 99999999, page: 1, offset: 1, sort: 'desc' 
+                });
+                if (txData.result && txData.result.length > 0) {
+                    const txCountData = await fetchEtherscanAPI('proxy', 'eth_getTransactionCount', { 
+                        address, tag: 'latest' 
+                    });
+                    txnCount = parseInt(txCountData.result, 16) || 0;
+                    
+                    const txDate = new Date(parseInt(txData.result[0].timeStamp) * 1000);
+                    latestDateTimestamp = txDate.toISOString().slice(0, 16).replace('T', ' ');
+                    const diffDays = Math.floor((Date.now() - txDate) / (1000 * 60 * 60 * 24));
+                    latestDateDisplay = diffDays < 1 ? 'Today' : diffDays === 1 ? '1 day' : `${diffDays} days`;
+                }
+            } catch (e) { /* Transaction data optional */ }
+
+            return { 
+                address, chain: 'ethereum', nativeSymbol: 'ETH',
+                totalAssets: totalAssetsUSD, nativeBalance, nativePrice, 
+                usdtBalance, usdcBalance, txnCount, 
+                latestTxn: latestDateDisplay, latestTxnTimestamp: latestDateTimestamp, 
+                nftCount: 0, name: '', website: '' 
+            };
+        }
+
+        // ============================================
+        // SOLANA API (Helius) - Using DAS API
+        // Based on official docs: https://www.helius.dev/docs/das-api
+        // ============================================
+        
+        async function fetchSolWalletData(address) {
+            let nativeBalance = 0;
+            let nativePrice = 0;
+            let usdtBalance = 0;
+            let usdcBalance = 0;
+            let totalAssetsUSD = 0;
+            let nftCount = 0;
+            
+            // ============================================
+            // STEP 1: Get all assets using DAS API getAssetsByOwner
+            // This returns SOL balance, all tokens with prices, and NFTs
+            // ============================================
+            try {
+                const response = await fetch(CONFIG.HELIUS_RPC_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 'wallet-tracker',
+                        method: 'getAssetsByOwner',
+                        params: {
+                            ownerAddress: address,
+                            page: 1,
+                            limit: 1000,
+                            displayOptions: {
+                                showFungible: true,      // Include SPL tokens
+                                showNativeBalance: true, // Include SOL balance
+                            },
+                        },
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message || 'Helius API error');
+                }
+                
+                const result = data.result;
+                
+                // Get native SOL balance from nativeBalance field
+                if (result.nativeBalance) {
+                    // nativeBalance is in lamports (1 SOL = 1e9 lamports)
+                    nativeBalance = (result.nativeBalance.lamports || 0) / 1e9;
+                    nativePrice = result.nativeBalance.price_per_sol || 0;
+                    totalAssetsUSD += result.nativeBalance.total_price || (nativeBalance * nativePrice);
+                }
+                
+                // Process all assets (tokens and NFTs)
+                if (result.items && Array.isArray(result.items)) {
+                    result.items.forEach(asset => {
+                        // Check if it's a fungible token
+                        if (asset.interface === 'FungibleToken' || asset.interface === 'FungibleAsset') {
+                            const symbol = (asset.content?.metadata?.symbol || asset.token_info?.symbol || '').toUpperCase();
+                            const decimals = asset.token_info?.decimals || 6;
+                            const rawBalance = asset.token_info?.balance || 0;
+                            const balance = rawBalance / Math.pow(10, decimals);
+                            const pricePerToken = asset.token_info?.price_info?.price_per_token || 0;
+                            
+                            if (symbol === 'USDT') {
+                                usdtBalance = balance;
+                            } else if (symbol === 'USDC') {
+                                usdcBalance = balance;
+                            }
+                            
+                            // Add to total assets
+                            totalAssetsUSD += balance * pricePerToken;
+                        } 
+                        // Count NFTs
+                        else if (asset.interface === 'V1_NFT' || asset.interface === 'ProgrammableNFT' || 
+                                 asset.interface === 'V2_NFT' || asset.content?.metadata?.name) {
+                            nftCount++;
+                        }
+                    });
+                }
+                
+            } catch (e) {
+                // Fallback: Get SOL balance using standard RPC
+                try {
+                    const balanceResponse = await fetch(CONFIG.HELIUS_RPC_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: 'balance',
+                            method: 'getBalance',
+                            params: [address],
+                        }),
+                    });
+                    const balanceData = await balanceResponse.json();
+                    if (balanceData.result?.value) {
+                        nativeBalance = balanceData.result.value / 1e9;
+                    }
+                } catch (e2) {
+                    // Balance fetch failed
+                }
+                
+                // Get SOL price from CoinGecko as fallback
+                try {
+                    const priceResp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+                    const priceData = await priceResp.json();
+                    nativePrice = priceData.solana?.usd || 0;
+                } catch (e3) {
+                    nativePrice = 200; // Fallback price estimate
+                }
+                
+                totalAssetsUSD = (nativeBalance * nativePrice) + usdtBalance + usdcBalance;
+            }
+
+            // ============================================
+            // STEP 2: Get transaction history using Enhanced Transactions API
+            // Endpoint: GET /v0/addresses/{address}/transactions
+            // ============================================
+            let txnCount = 0;
+            let latestDateDisplay = 'N/A';
+            let latestDateTimestamp = '';
+            
+            try {
+                const txResponse = await fetch(
+                    `https://api-mainnet.helius-rpc.com/v0/addresses/${address}/transactions?api-key=${CONFIG.HELIUS_API_KEY}&limit=50`
+                );
+                const txData = await txResponse.json();
+                
+                if (Array.isArray(txData) && txData.length > 0) {
+                    txnCount = txData.length;
+                    if (txnCount >= 50) txnCount = '50+';
+                    
+                    // Get latest transaction time
+                    const latestTx = txData[0];
+                    const timestamp = latestTx.timestamp;
+                    
+                    if (timestamp) {
+                        const txDate = new Date(timestamp * 1000);
+                        latestDateTimestamp = txDate.toISOString().slice(0, 16).replace('T', ' ');
+                        const diffDays = Math.floor((Date.now() - txDate) / (1000 * 60 * 60 * 24));
+                        latestDateDisplay = diffDays < 1 ? 'Today' : diffDays === 1 ? '1 day' : `${diffDays} days`;
+                    }
+                }
+            } catch (e) {
+                // Transaction history fetch failed - try standard RPC
+                try {
+                    const sigResponse = await fetch(CONFIG.HELIUS_RPC_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            id: 'signatures',
+                            method: 'getSignaturesForAddress',
+                            params: [address, { limit: 10 }],
+                        }),
+                    });
+                    const sigData = await sigResponse.json();
+                    
+                    if (sigData.result && sigData.result.length > 0) {
+                        txnCount = sigData.result.length;
+                        if (txnCount >= 10) txnCount = '10+';
+                        
+                        const blockTime = sigData.result[0].blockTime;
+                        if (blockTime) {
+                            const txDate = new Date(blockTime * 1000);
+                            latestDateTimestamp = txDate.toISOString().slice(0, 16).replace('T', ' ');
+                            const diffDays = Math.floor((Date.now() - txDate) / (1000 * 60 * 60 * 24));
+                            latestDateDisplay = diffDays < 1 ? 'Today' : diffDays === 1 ? '1 day' : `${diffDays} days`;
+                        }
+                    }
+                } catch (e2) {
+                    // Signatures fetch also failed
+                }
+            }
+
+            return { 
+                address, 
+                chain: 'solana', 
+                nativeSymbol: 'SOL',
+                totalAssets: totalAssetsUSD, 
+                nativeBalance, 
+                nativePrice, 
+                usdtBalance, 
+                usdcBalance, 
+                txnCount, 
+                latestTxn: latestDateDisplay, 
+                latestTxnTimestamp: latestDateTimestamp, 
+                nftCount,
+                name: '', 
+                website: '' 
+            };
+        }
+
+        // MAIN FETCH FUNCTION - Routes to correct chain
+        async function fetchWalletData(address) {
+            const chain = detectChain(address);
+            switch (chain) {
+                case 'tron': return await fetchTronWalletData(address);
+                case 'ethereum': return await fetchEthWalletData(address);
+                case 'solana': return await fetchSolWalletData(address);
+                default: throw new Error('Unknown chain');
+            }
+        }
+
+        // ============================================
+        // SAVE TO SHEET
+        // ============================================
+        
+        async function saveToSheet(data) {
+            try {
+                const accessToken = await getAccessToken();
+                if (!accessToken) {
+                    logError('Google Sheets', 'Failed to get access token');
+                    return;
+                }
+                
+                const fields = getSelectedDataFields();
+                const fmt = n => typeof n === 'string' ? n : Math.round(n).toLocaleString('en-US');
+                
+                // Build row based on selected fields (empty string for unselected)
+                const row = [
+                    data.address,                                                    // Always included
+                    data.chain?.toUpperCase() || 'TRON',                            // Always included
+                    fields.latestTx ? (data.latestTxnTimestamp || data.latestTxn || 'N/A') : '',
+                    fields.totalAssets ? fmt(data.totalAssets) : '',
+                    fields.nativeBalance ? `${fmt(data.nativeBalance)} ${data.nativeSymbol || 'TRX'}` : '',
+                    fields.nativeUSD ? fmt(data.nativeBalance * data.nativePrice) : '',
+                    fields.usdt ? fmt(data.usdtBalance) : '',
+                    fields.usdc ? fmt(data.usdcBalance) : '',
+                    fields.txCount ? fmt(data.txnCount) : '',
+                    fields.nftCount ? fmt(data.nftCount) : '',
+                    fields.lookupDate ? new Date().toISOString().slice(0, 16).replace('T', ' ') : '',
+                    fields.name ? (data.name || '') : '',
+                    fields.website ? (data.website || '') : '',
+                    fields.explorerLink ? getExplorerUrl(data.address, data.chain) : '',
+                    getGoogleSearchUrl(data.address),
+                    getTwitterSearchUrl(data.address)
+                ];
+                
+                const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Explorer!A:P:append?valueInputOption=RAW`, { 
+                    method: 'POST', 
+                    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ values: [row] }) 
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    logError('Google Sheets', errorData.error?.message || `API error ${response.status}`);
+                }
+            } catch (error) {
+                logError('Google Sheets', error.message);
+            }
+        }
+
+        // ============================================
+        // DISPLAY RESULTS
+        // ============================================
+        
+        function displayResults(data) {
+            const fields = getSelectedDataFields();
+            const symbol = data.nativeSymbol || 'TRX';
+            
+            // Always show address
+            document.getElementById('displayAddress').textContent = data.address;
+            document.getElementById('resultLinks').innerHTML = createLinkButtons(data.address);
+            
+            // Total Assets
+            const totalAssetsCard = document.getElementById('totalAssetsCard');
+            if (fields.totalAssets) {
+                document.getElementById('totalAssets').textContent = `$${Math.round(data.totalAssets).toLocaleString()}`;
+                totalAssetsCard.style.display = 'block';
+            } else {
+                totalAssetsCard.style.display = 'none';
+            }
+            
+            // Native Balance Card
+            const nativeBalanceCard = document.getElementById('nativeBalanceCard');
+            if (fields.nativeBalance || fields.nativeUSD) {
+                document.getElementById('nativeBalanceLabel').textContent = `${symbol} Balance`;
+                if (fields.nativeBalance && fields.nativeUSD) {
+                    document.getElementById('nativeBalance').innerHTML = `${Math.round(data.nativeBalance).toLocaleString()} ${symbol} / <span style="color:#10b981">$${Math.round(data.nativeBalance * data.nativePrice).toLocaleString()}</span>`;
+                } else if (fields.nativeBalance) {
+                    document.getElementById('nativeBalance').textContent = `${Math.round(data.nativeBalance).toLocaleString()} ${symbol}`;
+                } else if (fields.nativeUSD) {
+                    document.getElementById('nativeBalance').innerHTML = `<span style="color:#10b981">$${Math.round(data.nativeBalance * data.nativePrice).toLocaleString()}</span>`;
+                }
+                nativeBalanceCard.style.display = 'block';
+            } else {
+                nativeBalanceCard.style.display = 'none';
+            }
+            
+            // USDT Card
+            const usdtCard = document.getElementById('usdtCard');
+            if (fields.usdt) {
+                document.getElementById('usdtBalance').textContent = `${Math.round(data.usdtBalance).toLocaleString()} USDT`;
+                usdtCard.style.display = 'block';
+            } else {
+                usdtCard.style.display = 'none';
+            }
+            
+            // USDC Card
+            const usdcCard = document.getElementById('usdcCard');
+            if (fields.usdc) {
+                document.getElementById('usdcBalance').textContent = `${Math.round(data.usdcBalance).toLocaleString()} USDC`;
+                usdcCard.style.display = 'block';
+            } else {
+                usdcCard.style.display = 'none';
+            }
+            
+            // Transaction Count Card
+            const txCountCard = document.getElementById('txCountCard');
+            if (fields.txCount) {
+                document.getElementById('txnCount').textContent = data.txnCount.toLocaleString ? data.txnCount.toLocaleString() : data.txnCount;
+                txCountCard.style.display = 'block';
+            } else {
+                txCountCard.style.display = 'none';
+            }
+            
+            // Latest Transaction Card
+            const latestTxCard = document.getElementById('latestTxCard');
+            if (fields.latestTx) {
+                document.getElementById('latestTxn').textContent = data.latestTxn;
+                latestTxCard.style.display = 'block';
+            } else {
+                latestTxCard.style.display = 'none';
+            }
+            
+            // NFT Count Card
+            const nftCountCard = document.getElementById('nftCountCard');
+            if (fields.nftCount) {
+                document.getElementById('nftCount').textContent = data.nftCount.toLocaleString ? data.nftCount.toLocaleString() : data.nftCount;
+                nftCountCard.style.display = 'block';
+            } else {
+                nftCountCard.style.display = 'none';
+            }
+            
+            // Conditionally show account name and website (with XSS protection)
+            const hasName = data.name && data.name.trim() !== '' && fields.name;
+            const hasWebsite = data.website && data.website.trim() !== '' && fields.website;
+            
+            const nameCard = document.getElementById('accountNameCard');
+            const websiteCard = document.getElementById('accountWebsiteCard');
+            const infoGrid = document.getElementById('accountInfoGrid');
+            
+            if (hasName) {
+                document.getElementById('accountName').textContent = data.name;
+                nameCard.style.display = 'block';
+            } else {
+                nameCard.style.display = 'none';
+            }
+            
+            if (hasWebsite) {
+                const validatedUrl = safeUrl(data.website);
+                if (validatedUrl) {
+                    const displayUrl = sanitizeHTML(data.website);
+                    document.getElementById('accountWebsite').innerHTML = `<a href="${validatedUrl}" target="_blank" rel="noopener noreferrer" style="color:#3b82f6">${displayUrl}</a>`;
+                    websiteCard.style.display = 'block';
+                } else {
+                    // Invalid/unsafe URL - show as text only
+                    document.getElementById('accountWebsite').textContent = data.website;
+                    websiteCard.style.display = 'block';
+                }
+            } else {
+                websiteCard.style.display = 'none';
+            }
+            
+            infoGrid.style.display = (hasName || hasWebsite) ? 'grid' : 'none';
+            
+            // Show/hide grids based on any visible cards
+            document.getElementById('balancesGrid').style.display = 
+                (fields.nativeBalance || fields.nativeUSD || fields.usdt || fields.usdc) ? 'grid' : 'none';
+            document.getElementById('activityGrid').style.display = 
+                (fields.txCount || fields.latestTx || fields.nftCount) ? 'grid' : 'none';
+        }
+
+        // ============================================
+        // MAIN LOOKUP
+        // ============================================
+        
+        async function lookupWallets() {
+            const input = document.getElementById('walletInput').value.trim();
+            if (!input) { showMessage('error', 'Please enter wallet addresses'); return; }
+            const { wallets, invalid } = parseWallets(input);
+            if (invalid.length) { showMessage('error', `Invalid addresses:\n${invalid.join('\n')}`); return; }
+            if (!wallets.length) { showMessage('error', 'No valid addresses'); return; }
+
+            const duplicateAddresses = [];
+            let toProcess = wallets;
+            
+            if (document.getElementById('skipDuplicates').checked) {
+                toProcess = wallets.filter(addr => {
+                    if (checkDuplicate(addr)) {
+                        duplicateAddresses.push(addr);
+                        return false;
+                    }
+                    return true;
+                });
+                if (!toProcess.length) { 
+                    showMessage('warning', `All ${duplicateAddresses.length} addresses are duplicates`); 
+                    return; 
+                }
+            } else {
+                wallets.forEach(addr => {
+                    if (checkDuplicate(addr)) {
+                        duplicateAddresses.push(addr);
+                    }
+                });
+            }
+
+            isCancelled = false;
+            failedWallets = [];
+            const startTime = Date.now();
+            let successCount = 0, processed = [];
+            const shouldSave = document.getElementById('saveToSheets').checked;
+            const skipDupes = document.getElementById('skipDuplicates').checked;
+            const duplicateCount = duplicateAddresses.length;
+
+            hideMessage();
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('batchSummary').classList.remove('active');
+            document.getElementById('failedList').classList.remove('active');
+            document.getElementById('progressContainer').classList.add('active');
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('cancelBtn').style.display = 'inline-flex';
+
+            for (let i = 0; i < toProcess.length && !isCancelled; i++) {
+                document.getElementById('progressFill').style.width = `${((i + 1) / toProcess.length) * 100}%`;
+                
+                // Calculate time estimate
+                let timeEstimate = '';
+                if (i > 0) {
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const avgTimePerWallet = elapsed / i;
+                    const remaining = Math.ceil(avgTimePerWallet * (toProcess.length - i));
+                    timeEstimate = remaining > 60 
+                        ? ` • ~${Math.ceil(remaining / 60)}m remaining` 
+                        : ` • ~${remaining}s remaining`;
+                } else if (toProcess.length > 1) {
+                    // Initial estimate: ~2.5s per wallet
+                    const initialEstimate = Math.ceil(2.5 * toProcess.length);
+                    timeEstimate = initialEstimate > 60 
+                        ? ` • ~${Math.ceil(initialEstimate / 60)}m estimated` 
+                        : ` • ~${initialEstimate}s estimated`;
+                }
+                document.getElementById('progressText').textContent = `Processing ${i + 1} of ${toProcess.length}${timeEstimate}`;
+                
+                const isDuplicate = duplicateAddresses.includes(toProcess[i]);
+                
+                try {
+                    const data = await fetchWalletData(toProcess[i]);
+                    if (shouldSave) await saveToSheet(data);
+                    saveHistory(data, isDuplicate);
+                    processed.push(data);
+                    successCount++;
+                } catch (e) { 
+                    failedWallets.push({ address: toProcess[i], reason: e.message });
+                    logError(`Wallet Lookup (${detectChain(toProcess[i])})`, `${toProcess[i].slice(0, 12)}...: ${e.message}`);
+                }
+                if (i < toProcess.length - 1) await sleep(500);
+            }
+
+            document.getElementById('progressContainer').classList.remove('active');
+            document.getElementById('searchBtn').disabled = false;
+            document.getElementById('cancelBtn').style.display = 'none';
+
+            let completionMsg = '';
+            const saveMsg = shouldSave ? ' & saved to Sheets' : '';
+            
+            if (toProcess.length === 1 && processed.length === 1) {
+                displayResults(processed[0]);
+                document.getElementById('resultsSection').classList.add('active');
+                
+                if (duplicateCount > 0 && !skipDupes) {
+                    completionMsg = `✓ Lookup complete${saveMsg} (⚠️ duplicate)`;
+                    showMessage('warning', completionMsg);
+                } else {
+                    completionMsg = `✓ Lookup complete${saveMsg}!`;
+                    showMessage('success', completionMsg);
+                }
+            } else {
+                document.getElementById('successCount').textContent = successCount;
+                document.getElementById('duplicateCount').textContent = skipDupes ? duplicateCount : duplicateAddresses.filter(a => toProcess.includes(a)).length;
+                document.getElementById('failedCount').textContent = failedWallets.length;
+                document.getElementById('totalTime').textContent = `${Math.round((Date.now() - startTime) / 1000)}s`;
+                document.getElementById('batchSummary').classList.add('active');
+                
+                if (failedWallets.length) {
+                    renderFailedWallets();
+                    document.getElementById('failedList').classList.add('active');
+                }
+                
+                let msgParts = [`Completed: ${successCount} processed${saveMsg}`];
+                if (failedWallets.length > 0) msgParts.push(`${failedWallets.length} failed`);
+                if (duplicateCount > 0) {
+                    msgParts.push(skipDupes ? `${duplicateCount} duplicates skipped` : `${duplicateCount} duplicates`);
+                }
+                completionMsg = msgParts.join(', ');
+                
+                const msgType = failedWallets.length > 0 ? 'warning' : (duplicateCount > 0 ? 'warning' : 'success');
+                showMessage(msgType, completionMsg);
+            }
+        }
+
+        function cancelLookup() { 
+            isCancelled = true; 
+            showMessage('warning', 'Cancelled'); 
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            displayHistory();
+            checkApiStatus(); // Check API connections on load
+        });
+    </script>
+</body>
+</html>
